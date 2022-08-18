@@ -1,0 +1,65 @@
+schemaName: demo
+
+dataSources:
+ demo:
+   url: jdbc:mysql://127.0.0.1:3306/demo-sharding?useUnicode=true&characterEncoding=UTF8&serverTimezone=GMT%2B8
+   username: root
+   password: 123456
+
+shardingRule:
+ # 绑定关系表
+  bindingTables:
+    - demo_number,demo_number_rel
+  tables:
+    demo_number:
+      actualDataNodes: demo.demo_number_$->{0..2}
+      tableStrategy:
+        # 行表达式分片策略（Groovy 表达式）
+        # 只支持单分片键
+        # 支持 = 和 IN 分片操作
+        inline:
+          algorithmExpression: demo_number_$->{id % 3}
+          shardingColumn: id
+    demo_string:
+      actualDataNodes: demo.demo_string_$->{0..2}
+      tableStrategy:
+        inline:
+          algorithmExpression: demo_string_$->{(id.hashCode() & Integer.MAX_VALUE) % 3}
+          shardingColumn: id
+    demo_number_rel:
+      actualDataNodes: demo.demo_number_rel_$->{0..2}
+      tableStrategy:
+        inline:
+          algorithmExpression: demo_number_rel_$->{number_id % 3}
+          shardingColumn: number_id
+    demo_number_rel_tmp:
+      actualDataNodes: demo.demo_number_rel_$->{0..2}
+      tableStrategy:
+        inline:
+          algorithmExpression: demo_number_rel_$->{number_id % 3}
+          shardingColumn: number_id
+    demo_year:
+      actualDataNodes: demo.demo_year_$->{2021..2023}
+      tableStrategy:
+        # 标准分片策略
+        # 只支持单分片键
+        standard:
+          # 精准分片（必选）：支持 = 和 IN 分片操作
+          preciseAlgorithmClassName: io.demo.sharding.algorithm.standard.YearPreciseShardingAlgorithm
+          # 范围分片（可选）：支持 BETWEEN AND, >, <, >=, <= 分片操作
+          rangeAlgorithmClassName: io.demo.sharding.algorithm.standard.YearRangeShardingAlgorithm
+          shardingColumn: create_time
+    demo_order:
+      actualDataNodes: demo.demo_order_$->{2021..2023}_$->{0..2}
+      tableStrategy:
+        # 复合分片策略
+        complex:
+          algorithmClassName: io.demo.sharding.algorithm.complex.YearAndUserIdShardingAlgorithm
+          shardingColumns: create_time,user_id
+    # 测试 create drop
+    demo_create:
+      actualDataNodes: demo.demo_create_$->{0..5}
+      tableStrategy:
+        inline:
+          algorithmExpression: demo_create_$->{id % 5}
+          shardingColumn: id

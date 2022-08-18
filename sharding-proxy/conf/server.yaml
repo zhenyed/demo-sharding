@@ -1,0 +1,7 @@
+authentication:
+  users:
+    root:
+      password: root
+
+props:
+  sql.show: true
